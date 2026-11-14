@@ -32,9 +32,162 @@ const cars = [
 
 let nextId = Math.max(0, ...cars.map(car => car.id)) + 1;
 
+
+
+function parseNumber(value, integer = false, min = 0) {
+  // Parametr opcjonalny - nie zostal podany
+  if (value === undefined) {
+    return null;
+  }
+
+  // Sprawdzenie, czy otrzymalismy tekst
+  if (typeof value !== "string" || value.trim() === "") {
+    return NaN;
+  }
+
+  const number = Number(value);
+
+  // Sprawdzenie poprawnosci liczby
+  if (
+    !Number.isFinite(number) ||
+    number < min ||
+    (integer && !Number.isInteger(number))
+  ) {
+    return NaN;
+  }
+
+  return number;
+}
+
+
+
 router.get("/", (req, res) => {
-  res.json(cars);
+  // Pobranie parametrow query
+  const {
+    q,
+    brand,
+    minPrice,
+    maxPrice,
+    minYear,
+    maxYear,
+    minMileage,
+    maxMileage
+  } = req.query;
+
+  // Walidacja parametrow tekstowych
+  if (
+    (q !== undefined &&
+      (typeof q !== "string" || q.trim() === "")) ||
+    (brand !== undefined &&
+      (typeof brand !== "string" || brand.trim() === ""))
+  ) {
+    return res.status(400).json({
+      error: "Nieprawidlowe parametry tekstowe"
+    });
+  }
+
+  // Konwersja parametrow liczbowych
+  const priceFrom = parseNumber(minPrice);
+  const priceTo = parseNumber(maxPrice);
+
+  const yearFrom = parseNumber(minYear, true, 1886);
+  const yearTo = parseNumber(maxYear, true, 1886);
+
+  const mileageFrom = parseNumber(minMileage, true);
+  const mileageTo = parseNumber(maxMileage, true);
+
+  // Walidacja liczb
+  const values = [
+    priceFrom, priceTo,
+    yearFrom, yearTo,
+    mileageFrom, mileageTo
+  ];
+
+  if (values.some(value => Number.isNaN(value))) {
+    return res.status(400).json({
+      error: "Nieprawidlowe parametry liczbowe"
+    });
+  }
+
+  // Sprawdzenie zakresow
+  if (
+    (priceFrom !== null && priceTo !== null &&
+      priceFrom > priceTo) ||
+    (yearFrom !== null && yearTo !== null &&
+      yearFrom > yearTo) ||
+    (mileageFrom !== null && mileageTo !== null &&
+      mileageFrom > mileageTo)
+  ) {
+    return res.status(400).json({
+      error: "Nieprawidlowy zakres filtrowania"
+    });
+  }
+
+  // Utworzenie listy wynikow
+  let result = [...cars];
+
+  // Wyszukiwanie marki lub modelu
+  if (q !== undefined) {
+    const search = q.toLowerCase().trim();
+
+    result = result.filter(car =>
+      `${car.brand} ${car.model}`
+        .toLowerCase()
+        .includes(search)
+    );
+  }
+
+  // Filtrowanie marki
+  if (brand !== undefined) {
+    result = result.filter(car =>
+      car.brand.toLowerCase() === brand.toLowerCase().trim()
+    );
+  }
+
+  // Filtrowanie ceny
+  if (priceFrom !== null) {
+    result = result.filter(car => car.price >= priceFrom);
+  }
+
+  if (priceTo !== null) {
+    result = result.filter(car => car.price <= priceTo);
+  }
+
+  // Filtrowanie rocznika
+  if (yearFrom !== null) {
+    result = result.filter(car => car.year >= yearFrom);
+  }
+
+  if (yearTo !== null) {
+    result = result.filter(car => car.year <= yearTo);
+  }
+
+  // Filtrowanie przebiegu
+  if (mileageFrom !== null) {
+    result = result.filter(car =>
+      car.mileage >= mileageFrom
+    );
+  }
+
+  if (mileageTo !== null) {
+    result = result.filter(car =>
+      car.mileage <= mileageTo
+    );
+  }
+
+  // Zwrocenie wynikow
+  res.json(result);
 });
+
+
+
+
+
+
+
+// router.get("/", (req, res) => {
+//   res.json(cars);
+// });
 
 router.get("/:id", (req, res) => {
   const id = Number(req.params.id);
