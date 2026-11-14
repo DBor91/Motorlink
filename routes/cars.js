@@ -144,7 +144,33 @@ router.put("/:id", (req, res) => {
   res.status(200).json(cars[index]);
 });
 
+router.delete("/:id", (req, res) => {
+  // Pobranie ID samochodu z adresu
+  const id = Number(req.params.id);
 
+  // Walidacja identyfikatora
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    return res.status(400).json({
+      error: "Nieprawidlowy identyfikator samochodu"
+    });
+  }
+
+  // Wyszukanie samochodu w tablicy
+  const index = cars.findIndex(car => car.id === id);
+
+  // Sprawdzenie, czy samochod istnieje
+  if (index === -1) {
+    return res.status(404).json({
+      error: "Nie znaleziono samochodu"
+    });
+  }
+
+  // Usuniecie samochodu z tablicy
+  cars.splice(index, 1);
+
+  // Potwierdzenie usuniecia
+  res.status(204).send();
+});
 
 
 
