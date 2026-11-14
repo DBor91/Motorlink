@@ -151,7 +151,7 @@ router.delete("/:id", (req, res) => {
   // Walidacja identyfikatora
   if (!Number.isSafeInteger(id) || id <= 0) {
     return res.status(400).json({
-      error: "Nieprawidlowy identyfikator samochodu"
+      error: "Nieprawidlowe dane samochodu"
     });
   }
 
