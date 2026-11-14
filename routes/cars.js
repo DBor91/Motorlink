@@ -34,4 +34,18 @@ router.get("/", (req, res) => {
   res.json(cars);
 });
 
+router.get("/:id", (req, res) => {
+  const id = Number(req.params.id);
+
+  const car = cars.find(car => car.id === id);
+
+  if (!car) {
+    return res.status(404).json({
+      error: "Nie znaleziono samochodu"
+    });
+  }
+
+  res.json(car);
+});
+
 export default router;
